@@ -18,18 +18,16 @@ package org.apache.gluten.execution
 
 import org.apache.gluten.extension.GlutenPlan
 import org.apache.gluten.utils.{Arm, FallbackUtil}
-
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.{DataFrame, GlutenQueryTest, Row}
-import org.apache.spark.sql.execution.{CommandResultExec, SparkPlan}
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, AdaptiveSparkPlanHelper, ShuffleQueryStageExec}
+import org.apache.spark.sql.execution.{CommandResultExec, SparkPlan}
 import org.apache.spark.sql.test.SharedSparkSession
 import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{DataFrame, GlutenQueryTest, Row}
 
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-
 import scala.io.Source
 import scala.reflect.ClassTag
 
@@ -250,6 +248,34 @@ abstract class WholeStageTransformerSuite
   def checkSparkOperatorMatch[T <: SparkPlan](df: DataFrame)(implicit tag: ClassTag[T]): Unit = {
     val executedPlan = getExecutedPlan(df)
     assert(executedPlan.exists(plan => tag.runtimeClass.isInstance(plan)))
+  }
+
+  /**
+   * Check whether the executed plan of a dataframe contains the expected plan chain.
+   *
+   * @param df
+   *   : the input dataframe.
+   * @param tag
+   *   : class of the expected plan.
+   * @param childTag
+   *   : class of the expected plan's child.
+   * @tparam T
+   *   : type of the expected plan.
+   * @tparam PT
+   *   : type of the expected plan's child.
+   */
+  def checkSparkOperatorChainMatch[T <: SparkPlan, PT <: SparkPlan](
+      df: DataFrame)(implicit tag: ClassTag[T], childTag: ClassTag[PT]): Unit = {
+    val executedPlan = getExecutedPlan(df)
+    assert(
+      executedPlan.exists(
+        plan =>
+          tag.runtimeClass.isInstance(plan)
+            && childTag.runtimeClass.isInstance(plan.children.head)),
+      s"""Expect an operator chain of
+         |[${tag.runtimeClass.getSimpleName} -> ${childTag.runtimeClass.getSimpleName}]
+         |exists in executedPlan:\n ${executedPlan.last}""".stripMargin
+    )
   }
 
   /**

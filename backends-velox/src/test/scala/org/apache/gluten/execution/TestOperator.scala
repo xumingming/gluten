@@ -20,17 +20,15 @@ import org.apache.gluten.GlutenConfig
 import org.apache.gluten.datasource.ArrowCSVFileFormat
 import org.apache.gluten.execution.datasource.v2.ArrowBatchScanExec
 import org.apache.gluten.sql.shims.SparkShimLoader
-
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.{AnalysisException, Row}
-import org.apache.spark.sql.execution.{ArrowFileSourceScanExec, ColumnarToRowExec, FilterExec, GenerateExec, ProjectExec, RDDScanExec}
 import org.apache.spark.sql.execution.window.WindowExec
-import org.apache.spark.sql.functions.{avg, col, lit, to_date, udf}
+import org.apache.spark.sql.execution._
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{DecimalType, StringType, StructField, StructType}
+import org.apache.spark.sql.{AnalysisException, Row}
 
 import java.util.concurrent.TimeUnit
-
 import scala.collection.JavaConverters
 
 class TestOperator extends VeloxWholeStageTransformerSuite {
@@ -787,7 +785,8 @@ class TestOperator extends VeloxWholeStageTransformerSuite {
           runQueryAndCompare(s"""
                                 |SELECT $func(a) from t2;
                                 |""".stripMargin) {
-            checkGlutenOperatorMatch[GenerateExecTransformer]
+            // No ProjectExecTransformer is introduced.
+            checkSparkOperatorChainMatch[GenerateExecTransformer, FilterExecTransformer]
           }
           sql("""select * from values
                 |  map(1, 'a', 2, 'b', 3, null),
@@ -797,7 +796,8 @@ class TestOperator extends VeloxWholeStageTransformerSuite {
           runQueryAndCompare(s"""
                                 |SELECT $func(a) from t2;
                                 |""".stripMargin) {
-            checkGlutenOperatorMatch[GenerateExecTransformer]
+            // No ProjectExecTransformer is introduced.
+            checkSparkOperatorChainMatch[GenerateExecTransformer, FilterExecTransformer]
           }
         }
     }

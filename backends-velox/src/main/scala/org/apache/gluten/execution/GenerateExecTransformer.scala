@@ -150,23 +150,23 @@ object PullOutGenerateProjectHelper extends PullOutProjectHelper {
             generate.generator.asInstanceOf[UnaryExpression].child,
             expressionMap,
             replaceBoundReference = true)
-          val newGeneratorChild = if (expressionMap.isEmpty) {
-            // generator.child is Attribute
-            generatorAttr.asInstanceOf[Attribute]
-          } else {
-            // generator.child is other expression, e.g Literal/CreateArray/CreateMap
-            expressionMap.values.head
-          }
-          val newGeneratorChildren = Seq(newGeneratorChild)
 
-          // Avoid using elimainateProjectList to create the project list
-          // because newGeneratorChild can be a duplicated Attribute in generate.child.output.
-          // The native side identifies the last field of projection as generator's input.
-          generate.copy(
-            generator =
-              generate.generator.withNewChildren(newGeneratorChildren).asInstanceOf[Generator],
-            child = ProjectExec(generate.child.output ++ newGeneratorChildren, generate.child)
-          )
+          if (!expressionMap.isEmpty) {
+            // generator.child is not an Attribute reference, e.g Literal/CreateArray/CreateMap.
+            // We plug in a Project to make it an Attribute reference.
+            // NOTE: DO NOT use eliminateProjectList to create the project list because
+            // newGeneratorChild can be a duplicated Attribute in generate.child.output. The native
+            // side identifies the last field of projection as generator's input.
+            val newGeneratorChildren = Seq(expressionMap.values.head)
+            generate.copy(
+              generator =
+                generate.generator.withNewChildren(newGeneratorChildren).asInstanceOf[Generator],
+              child = ProjectExec(generate.child.output ++ newGeneratorChildren, generate.child)
+            )
+          } else {
+            // generator.child is Attribute, no need to introduce a Project.
+            generate
+          }
         case JsonTuple(Seq(jsonObj, jsonPaths @ _*)) =>
           val getJsons: IndexedSeq[Expression] = {
             jsonPaths.map {
