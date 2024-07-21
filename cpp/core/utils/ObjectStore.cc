@@ -26,6 +26,8 @@ gluten::ObjectStore::~ObjectStore() {
     ResourceHandle handle = *itr;
     store_.erase(handle);
   }
+  std::cout << "===> cout Erase store: " << std::to_string(storeId_) << std::endl;
+  std::cerr << "===> cerr Erase store: " << std::to_string(storeId_) << std::endl;
   stores().erase(storeId_);
 }
 

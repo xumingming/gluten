@@ -43,6 +43,7 @@ class ObjectStore {
     static std::mutex mtx;
     std::lock_guard<std::mutex> lock(mtx);
     StoreHandle nextId = stores().nextId();
+    std::cout << "----> creating a ObjectStore for Id: " << std::to_string(nextId) << std::endl;
     auto store = std::unique_ptr<ObjectStore>(new ObjectStore(nextId));
     StoreHandle storeId = safeCast<StoreHandle>(stores().insert(store.get()));
     GLUTEN_CHECK(storeId == nextId, "Store ID mismatched, this should not happen");

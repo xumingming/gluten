@@ -21,6 +21,7 @@
 #include <limits>
 #include <mutex>
 #include <unordered_map>
+#include <iostream>
 #include "utils/exception.h"
 
 namespace gluten {
@@ -51,18 +52,28 @@ class ResourceMap {
     ResourceHandle result = safeCast<ResourceHandle>(resourceId_++);
     const std::lock_guard<std::mutex> lock(mtx_);
     map_.insert(std::pair<ResourceHandle, TResource>(result, holder));
+    std::cout << " ---> inserted id: " << std::to_string(result) << std::endl;
     return result;
   }
 
   void erase(ResourceHandle moduleId) {
     const std::lock_guard<std::mutex> lock(mtx_);
-    GLUTEN_CHECK(map_.erase(moduleId) == 1, "Module not found in resource map: " + std::to_string(moduleId));
+
+    if (map_.empty()) {
+      std::cout << "---> map_ is empty!" << std::endl;
+    }
+
+    for (auto& it: map_) {
+      std::cout << " ---> ResourceHandle: " << it.first;
+    }
+
+    GLUTEN_CHECK(map_.erase(moduleId) == 1, "ResourceHandle not found in resource map when try to erase: " + std::to_string(moduleId));
   }
 
   TResource lookup(ResourceHandle moduleId) {
     const std::lock_guard<std::mutex> lock(mtx_);
     auto it = map_.find(moduleId);
-    GLUTEN_CHECK(it != map_.end(), "Module not found in resource map: " + std::to_string(moduleId));
+    GLUTEN_CHECK(it != map_.end(), "ResourceHandle not found in resource map when try to lookup: " + std::to_string(moduleId));
     return it->second;
   }
 
