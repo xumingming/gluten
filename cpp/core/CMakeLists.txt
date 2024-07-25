@@ -221,6 +221,12 @@ if(ENABLE_GLUTEN_VCPKG)
     gluten PRIVATE -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/symbols.map)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  # Hide symbols of static dependencies
+  target_link_options(
+          gluten PRIVATE -Wl,-exported_symbols_list ${CMAKE_CURRENT_SOURCE_DIR}/macos_symbols.txt)
+endif ()
+
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
   execute_process(
     COMMAND ${CMAKE_C_COMPILER} -print-file-name=libstdc++fs.a

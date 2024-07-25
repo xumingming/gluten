@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include "benchmarks/common/BenchmarkUtils.h"
 #include "compute/VeloxBackend.h"
 #include "config/VeloxConfig.h"
 #include "memory/VeloxMemoryManager.h"
@@ -42,6 +41,11 @@ class MockAllocationListener : public gluten::AllocationListener {
 
 namespace {
 static const uint64_t kMB = 1 << 20;
+
+void initVeloxBackend(std::unordered_map<std::string, std::string>& conf) {
+  gluten::VeloxBackend::create(conf);
+}
+
 } // namespace
 
 class MemoryManagerTest : public ::testing::Test {

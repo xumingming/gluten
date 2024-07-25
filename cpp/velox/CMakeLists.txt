@@ -555,6 +555,12 @@ if(ENABLE_GLUTEN_VCPKG)
     velox PRIVATE -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/symbols.map)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  # Hide symbols of static dependencies
+  target_link_options(
+          velox PRIVATE -Wl,-exported_symbols_list ${CMAKE_CURRENT_SOURCE_DIR}/macos_symbols.txt)
+endif ()
+
 target_include_directories(
   velox
   PUBLIC ${CMAKE_SYSTEM_INCLUDE_PATH}
